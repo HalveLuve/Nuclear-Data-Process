@@ -18,6 +18,7 @@
 #define EVENT_SIZE 8*8+2
 #define ENERGY_SIZE 8*8
 #define MAP_SIZE 1280
+#define CHUNK_SIZE 4
 
 // 64 coordinates
 float xposition[] = {7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7, 7, 5, 3, 1, -1, -3, -5, -7};
@@ -102,22 +103,22 @@ int main() {
         append(&y_list, y);
     }
     fclose(fp_1);
-    while(line = fread(buffer, 66*4, 1, fp_2)) {
-        time = *(float*)buffer;
-        e = *(float*)(buffer + 4);
-        memset(energy, 0, sizeof(energy));
-        memset(x_sum, 0, sizeof(x_sum));
-        memset(y_sum, 0, sizeof(y_sum));
-        for(int i = 0; i < 64; i++) {
-            energy[i] = *(float*)(buffer + (i+2)*4);
-        }
-        hadamard_product(energy, xposition, x_sum, 64);
-        hadamard_product(energy, yposition, y_sum, 64);
-        float x = sum_array(x_sum, 64) / e;
-        float y = sum_array(y_sum, 64) / e;
-        append(&x_list, x);
-        append(&y_list, y);
-    }
+    // while(line = fread(buffer, 66*4, 1, fp_2)) {
+    //     time = *(float*)buffer;
+    //     e = *(float*)(buffer + 4);
+    //     memset(energy, 0, sizeof(energy));
+    //     memset(x_sum, 0, sizeof(x_sum));
+    //     memset(y_sum, 0, sizeof(y_sum));
+    //     for(int i = 0; i < 64; i++) {
+    //         energy[i] = *(float*)(buffer + (i+2)*4);
+    //     }
+    //     hadamard_product(energy, xposition, x_sum, 64);
+    //     hadamard_product(energy, yposition, y_sum, 64);
+    //     float x = sum_array(x_sum, 64) / e;
+    //     float y = sum_array(y_sum, 64) / e;
+    //     append(&x_list, x);
+    //     append(&y_list, y);
+    // }
     fclose(fp_2);
 
     int heatmap[MAP_SIZE][MAP_SIZE];
@@ -132,14 +133,16 @@ int main() {
     // Traverse x_list and y_list to perform Min-Max Normalization
     int max_cnt = -1;
     for(int i = 0; i < x_list.size; i++) {
-        int x_ = (int)(((x_list.data[i]-x_list.minn)/(x_list.maxn-x_list.minn)) * 1000);
-        int y_ = (int)(((y_list.data[i]-y_list.minn)/(y_list.maxn-y_list.minn)) * 1000);
-        // int x_ = (int)(((x_list.maxn-x_list.data[i])/x_list.maxn) * MAP_SIZE);
-        // int y_ = (int)(((y_list.maxn-y_list.data[i])/y_list.maxn) * MAP_SIZE);
-        heatmap[x_+140][y_+140]++;
-        if(heatmap[x_][y_] > max_cnt) {
-            max_cnt = heatmap[x_][y_];
+        // int x_ = (int)(((x_list.data[i]-x_list.minn)/(x_list.maxn-x_list.minn)) * 1000);
+        // int y_ = (int)(((y_list.data[i]-y_list.minn)/(y_list.maxn-y_list.minn)) * 1000);
+        int x_ = (int)((x_list.data[i]+8)/0.0125);
+        int y_ = (int)((y_list.data[i]+8)/0.0125);
+        if((x_ >= 1 && x_ <= 1280) && (y_ >= 1 && y_ <= 1280)) {
+            heatmap[x_][y_]++;
         }
+        // if(heatmap[x_][y_] > max_cnt) {
+        //     max_cnt = heatmap[x_][y_];
+        // }
     }
     for(int i = 0; i < MAP_SIZE; i++) {
         for(int j = 0; j < MAP_SIZE; j++) {
